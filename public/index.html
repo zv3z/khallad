@@ -278,6 +278,13 @@
   @keyframes cfall{to{transform:translateY(110vh) rotate(720deg);opacity:.9}}
   footer{text-align:center;color:#5b5394;font-size:12px;margin-top:36px;font-weight:700}
   footer b{color:var(--mag)}
+  /* Loading skeleton */
+  .skel{background:linear-gradient(90deg,#1f1148 25%,#2d1a60 50%,#1f1148 75%);background-size:200% 100%;animation:skelShim 1.4s infinite}
+  @keyframes skelShim{to{background-position:-200% 0}}
+  /* iPhone notch / safe-area */
+  .wrap{padding-bottom:max(70px,env(safe-area-inset-bottom,70px))}
+  .mute{top:max(14px,env(safe-area-inset-top,14px));left:max(14px,env(safe-area-inset-left,14px))}
+  .netbar{top:max(14px,env(safe-area-inset-top,14px));left:max(66px,calc(env(safe-area-inset-left,0px) + 66px))}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
   @media(max-width:680px){
     .brow{grid-template-columns:1fr}
