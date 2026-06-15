@@ -568,26 +568,49 @@ function goHub(){ sClick(); MG=null; clearInterval(mgTimerInt); show('scr-hub');
 let USER = store.get('user', null);
 function renderAuth(){
   $('authBox').innerHTML = USER
-    ? `<img class="avatar" src="${esc(USER.picture||'')}" onerror="this.style.display='none'"><span class="uname">${esc(USER.name)}</span>
+    ? `<img class="avatar" src="${esc(USER.picture||'')}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%22 y=%2270%22 font-size=%2280%22 text-anchor=%22middle%22>👤</text></svg>'"><span class="uname">${esc(USER.name)}</span>
        <button class="btn btn-ghost btn-sm" onclick="logout()">خروج</button>`
-    : `<button class="btn btn-ghost btn-sm" id="gBtn" onclick="googleLogin()">🔐 دخول بقوقل</button>`;
+    : `<button class="btn btn-main btn-sm" id="gBtn" onclick="showLoginOptions()">🎮 ابدأ اللعب</button>`;
 }
 function logout(){ USER=null; store.set('user',null); renderAuth(); }
+function showLoginOptions(){
+  modal(`<div class="sec-title">🎮 كيف تريد أن تلعب؟</div>
+    <div style="display:flex;gap:12px;margin-top:20px;flex-direction:column">
+      <button class="btn btn-main" style="width:100%" onclick="guestLogin()">
+        👤 لعب كضيف (Guest)
+      </button>
+      <button class="btn btn-ghost" style="width:100%;border:1px solid var(--muted)" onclick="showUsernameModal()">
+        📝 أدخل اسمك
+      </button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin-top:16px;text-align:center;line-height:1.6">
+      بيانات لعبك محفوظة محلياً على جهازك 🔒<br>
+      آمن تماماً وخصوصي 100%
+    </div>`);
+}
+function guestLogin(){
+  USER={ name:'ضيف '+Math.floor(Math.random()*10000), id:'guest_'+Date.now(), picture:null, isGuest:true };
+  store.set('user',USER); renderAuth(); closeModal(); toast('مرحباً بك في خَلّد! 🎉','success');
+}
+function showUsernameModal(){
+  modal(`<div class="sec-title">📝 أدخل اسمك</div>
+    <input id="usernameInput" type="text" placeholder="اسمك (اختياري)" 
+      style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-family:Tajawal,sans-serif;font-size:16px;margin-top:12px;text-align:right" maxlength="30">
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-main" onclick="setUsername()" style="flex:1">موافق ✓</button>
+      <button class="btn btn-ghost" onclick="guestLogin()" style="flex:1;border:1px solid var(--muted)">ضيف 👤</button>
+    </div>`);
+  setTimeout(()=>$('usernameInput').focus(),100);
+}
+function setUsername(){
+  const name=($('usernameInput').value||'لاعب').trim();
+  USER={ name:name, id:'player_'+Date.now()+'_'+Math.random().toString(36).substr(2,9), picture:null, isGuest:false };
+  store.set('user',USER); renderAuth(); closeModal(); toast(`أهلاً يا ${name}! 👋`,'success');
+}
 function googleLogin(){
-  if(!GOOGLE_CLIENT_ID){ modal(`<div class="sec-title">🔐 تسجيل الدخول بقوقل</div>
-    <div style="font-weight:700;line-height:1.9;color:var(--muted)">لتفعيل الدخول بقوقل بعد النشر:<br>
-    1) أنشئ <b style="color:var(--ink)">OAuth Client ID</b> من Google Cloud Console<br>
-    2) أضف نطاق موقعك في Authorized origins<br>
-    3) ضع المعرف في أول ملف index.html بالمتغير GOOGLE_CLIENT_ID<br><br>الخطوات بالتفصيل داخل README_AR.md 📄</div>
-    <div class="center" style="margin-top:14px"><button class="btn btn-main btn-sm" onclick="closeModal()">تمام</button></div>`); return; }
-  if(!window.google?.accounts){ const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.onload=googleLogin; document.head.appendChild(s); return; }
-  google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback: async (res)=>{
-    try{
-      const r = await fetch('/api/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:res.credential})});
-      const u = await r.json();
-      if(u && u.name){ USER=u; store.set('user',u); renderAuth(); sAward(); }
-    }catch(e){ toast('تعذر التحقق — تأكد أن الموقع منشور على كلاودفلير','err'); }
-  }});
+  // Deprecated: OAuth disabled for GitHub Pages compatibility
+  showLoginOptions();
+}
   google.accounts.id.prompt();
 }
 renderAuth();
