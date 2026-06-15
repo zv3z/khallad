@@ -4,13 +4,13 @@
  * ============================================================ */
 'use strict';
 
-const CACHE_NAME    = 'khallad-v2';
+const CACHE_NAME    = 'khallad-v3';
 const STATIC_ASSETS = [
-  '/',
-  '/app.js',
-  '/questions.js',
-  '/games.js',
-  '/manifest.json',
+  './',
+  './app.js',
+  './questions.js',
+  './games.js',
+  './manifest.json',
 ];
 
 // ─── التثبيت: خزّن الملفات الأساسية ─────────────────────────
