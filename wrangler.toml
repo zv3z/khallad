@@ -6,23 +6,6 @@ compatibility_date = "2025-01-01"
 directory = "docs"
 binding   = "ASSETS"
 
-# ─── Durable Objects: غرف اللعب الأونلاين ────────────────────
-[[durable_objects.bindings]]
-name       = "ROOMS"
-class_name = "GameRoom"
-
-[[migrations]]
-tag              = "v1"
-new_sqlite_classes = ["GameRoom"]
-
-# ─── D1 Database ─────────────────────────────────────────────
-# خطوة الإعداد:
-#   1) شغّل:  npx wrangler d1 create khallad-db
-#   2) انسخ database_id الناتج وضعه أدناه
-[[d1_databases]]
-binding       = "DB"
-database_name = "khallad-db"
-database_id   = "ضع-database_id-هنا-من-wrangler-d1-create"
 
 # ─── متغيرات البيئة ──────────────────────────────────────────
 # ADMIN_KEY: غيّره من لوحة Cloudflare Dashboard > Workers > Settings > Variables
