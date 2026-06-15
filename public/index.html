@@ -464,10 +464,14 @@
 
 <div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
 
+<!-- بيانات الأسئلة والألعاب — تُحمَّل أولاً لأن app.js يعتمد عليها -->
 <script src="questions.js"></script>
 <script src="games.js"></script>
+<!-- المنطق الرئيسي للتطبيق — defer يضمن تحميله بعد اكتمال DOM -->
+<script src="app.js" defer></script>
+<!-- placeholder لمنع تعريف GOOGLE_CLIENT_ID -->
 <script>
-const GOOGLE_CLIENT_ID = "";
+const GOOGLE_CLIENT_ID_PLACEHOLDER = "";
 const $=id=>document.getElementById(id);
 const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$(id).classList.add('on');window.scrollTo({top:0,behavior:'smooth'});};
 const MEM={};
