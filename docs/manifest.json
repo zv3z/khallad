@@ -2,7 +2,7 @@
   "name": "خَلّد — منصة ألعاب أبو خالد",
   "short_name": "خَلّد",
   "description": "منصة ألعاب عائلية تفاعلية: سين جيم، فاميلي فيود، من أنا، فوازير، وأكثر!",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#120829",
   "theme_color": "#8b5cf6",

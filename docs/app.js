@@ -255,19 +255,7 @@ function setUsername() {
   closeModal();
   toast(`أهلاً يا ${name}! 👋`, 'success');
 }
-function googleLogin() {
-  // Deprecated: OAuth disabled in this version for GitHub Pages compatibility
-  showLoginOptions();
-}
-          body: JSON.stringify({ credential: res.credential }),
-        });
-        const u = await r.json();
-        if (u?.name) { USER = u; store.set('user', u); renderAuth(); sAward(); toast('مرحباً ' + u.name + ' 👋', 'success'); }
-      } catch { toast('تعذر التحقق — تأكد أن الموقع منشور على كلاودفلير', 'err'); }
-    },
-  });
-  google.accounts.id.prompt();
-}
+function googleLogin() { showLoginOptions(); }
 renderAuth();
 
 // ─── Leaderboard & Scores ─────────────────────────────────────
