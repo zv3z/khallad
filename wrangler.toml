@@ -1,0 +1,22 @@
+name = "khallad"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "GameRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]
+
+# قاعدة بيانات D1 — أنشئها بالأمر:  npx wrangler d1 create khallad-db
+# ثم انسخ database_id الناتج هنا وأزل علامة #
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "khallad-db"
+# database_id = "ضع-المعرف-هنا"

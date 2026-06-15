@@ -1,0 +1,12 @@
+{
+  "name": "khallad",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute khallad-db --remote --file=schema.sql",
+    "gen": "python3 gen_bank.py && python3 gen_games.py"
+  },
+  "devDependencies": { "wrangler": "^4.0.0" }
+}
