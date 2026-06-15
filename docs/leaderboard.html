@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة الترتيب — خَلّد</title>
+  <link rel="stylesheet" href="index.html" type="text/css">
+  <style>
+    .leaderboard-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .leaderboard-table th {
+      background: linear-gradient(135deg, #8b5cf6, #d946ef);
+      color: white;
+      padding: 15px;
+      font-weight: 800;
+      font-size: 14px;
+      text-align: right;
+    }
+    .leaderboard-table td {
+      padding: 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .leaderboard-table tr:hover td {
+      background: rgba(139, 92, 246, 0.1);
+    }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-weight: 900;
+      font-size: 18px;
+      margin-left: 10px;
+    }
+    .rank-1 { background: #fbbf24; color: #3f2f04; }
+    .rank-2 { background: #d1d5db; color: #1f2937; }
+    .rank-3 { background: #f97316; color: #fff; }
+    .rank-default { background: var(--vio); color: white; }
+    
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .achievement-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+    .achievement-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--vio);
+      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+    }
+    .achievement-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+    .achievement-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .stats-box {
+      background: linear-gradient(135deg, var(--panel), rgba(139, 92, 246, 0.1));
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 15px 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--cyan);
+      font-family: 'Lalezar';
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+  
+  <div class="leaderboard-container">
+    <div style="text-align: center; margin: 30px 0;">
+      <h1 class="logo" style="font-size: 48px;">🏆 لوحة الترتيب</h1>
+      <p style="color: var(--muted); margin-top: 10px;">أفضل لاعبي خَلّد</p>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="stats-box">
+      <div class="stat-item">
+        <div class="stat-value" id="playerScore">0</div>
+        <div class="stat-label">نقاطك</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="playerRank">—</div>
+        <div class="stat-label">ترتيبك</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="playerAccuracy">0%</div>
+        <div class="stat-label">دقتك</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="playerStreak">0</div>
+        <div class="stat-label">أطول سلسلة</div>
+      </div>
+    </div>
+    
+    <!-- Leaderboard Table -->
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>الترتيب</th>
+          <th>اللاعب</th>
+          <th>النقاط</th>
+          <th>الأسئلة</th>
+          <th>الدقة</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardBody">
+        <tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;">جاري التحميل...</td></tr>
+      </tbody>
+    </table>
+    
+    <!-- Achievements Section -->
+    <div style="margin-top: 50px;">
+      <h2 class="sec-title">🏅 الأوسمة والإنجازات</h2>
+      <div class="achievements-grid" id="achievementsGrid">
+        <!-- يتم ملؤها من JavaScript -->
+      </div>
+    </div>
+    
+    <!-- Actions -->
+    <div style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+      <button class="btn btn-main" onclick="location.href='index.html'">← العودة للرئيسية</button>
+      <button class="btn btn-ghost" style="margin-right: 10px; border: 1px solid var(--muted);" onclick="exportLeaderboard()">📥 تصدير البيانات</button>
+    </div>
+  </div>
+  
+  <script src="advanced.js"></script>
+  <script>
+    // Initialize leaderboard display
+    function renderLeaderboard() {
+      const topPlayers = leaderboard.getTopPlayers(50);
+      const tbody = document.getElementById('leaderboardBody');
+      
+      if (topPlayers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;">لا توجد بيانات حتى الآن 📊</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = topPlayers.map((player, index) => {
+        const rank = index + 1;
+        let rankClass = 'rank-default';
+        if (rank === 1) rankClass = 'rank-1';
+        if (rank === 2) rankClass = 'rank-2';
+        if (rank === 3) rankClass = 'rank-3';
+        
+        const icon = ['🥇', '🥈', '🥉'][index] || (rank + '');
+        
+        return `<tr>
+          <td><span class="rank-badge ${rankClass}">${icon}</span></td>
+          <td style="font-weight: 700;">${player.name}</td>
+          <td>${player.stats.totalScore.toLocaleString('ar-EG')}</td>
+          <td>${player.stats.totalQuestions}</td>
+          <td>${player.getAccuracy()}%</td>
+        </tr>`;
+      }).join('');
+      
+      // Update player stats
+      const current = leaderboard.currentPlayer;
+      document.getElementById('playerScore').textContent = current.stats.totalScore.toLocaleString('ar-EG');
+      document.getElementById('playerRank').textContent = leaderboard.getPlayerRank(current.id) || '—';
+      document.getElementById('playerAccuracy').textContent = current.getAccuracy() + '%';
+      document.getElementById('playerStreak').textContent = current.stats.maxStreak;
+    }
+    
+    function renderAchievements() {
+      const grid = document.getElementById('achievementsGrid');
+      const current = leaderboard.currentPlayer;
+      
+      grid.innerHTML = APP_CONFIG.achievements.map(ach => {
+        const unlocked = current.achievements.includes(ach.id);
+        return `<div class="achievement-card" style="${!unlocked ? 'opacity: 0.5; filter: grayscale(1);' : ''}" title="${ach.name}">
+          <div class="achievement-icon">${ach.icon}</div>
+          <div class="achievement-name">${ach.name}</div>
+          ${unlocked ? '<div style="font-size: 10px; color: var(--grn); margin-top: 5px;">✓ محقق</div>' : '<div style="font-size: 10px; color: var(--muted);">مقفل 🔒</div>'}
+        </div>`;
+      }).join('');
+    }
+    
+    function exportLeaderboard() {
+      const backup = storage.export();
+      const dataStr = JSON.stringify(backup, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `khallad-leaderboard-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToast('تم تصدير البيانات بنجاح! ✓', 'success');
+    }
+    
+    // Render on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderLeaderboard();
+      renderAchievements();
+    });
+  </script>
+</body>
+</html>
