@@ -186,7 +186,9 @@ const HUBS = [
   { id:'guess', t:'خمن الصورة',         ic:'🖼️', e1:'👁️', e2:'❓', d:'ألغاز إيموجي بصرية: خمّن الأكلة أو المدينة أو الشخصية من الصور!',                g:'linear-gradient(150deg,#0c4a6e,#075985)', n:()=>(window.KHALLAD_EXTRA?.guess.length||0)+' لغزة',  go:()=>mgStart('guess') },
   { id:'harf',  t:'حروف وألوف',         ic:'⬡',  e1:'🔤', e2:'🎯', d:'شبكة 25 حرف: كل حرف سؤال! اختر الحرف وجاوب وادّعِ الخلية قبل منافسك',          g:'linear-gradient(150deg,#3b0764,#6b21a8)', n:()=>'25 حرف × أسئلة لا تنتهي',          go:()=>mgStart('harf') },
   { id:'midan', t:'الميدان',             ic:'🏟️', e1:'⚔️', e2:'🏆', d:'تنافس على مربعات الميدان! أجب على السؤال وادّعِ المنطقة • من يملأ الميدان يفوز', g:'linear-gradient(150deg,#064e3b,#022c22)', n:()=>'12 فئة × جولات لا تنتهي',           go:()=>mgStart('midan') },
-  { id:'bankq', t:'بنك الأسئلة',        ic:'💰', e1:'💵', e2:'🏦', d:'اختار السؤال اللي تبيه: 200 نقطة للسهل أو 600 للصعب! وإذا أخطأت الثاني يسرق',   g:'linear-gradient(150deg,#78350f,#451a03)', n:()=>'أسئلة × 3 مستويات',               go:()=>mgStart('bankq') },
+  { id:'bankq',   t:'بنك الأسئلة',      ic:'💰',  e1:'💵', e2:'🏦', d:'اختار السؤال اللي تبيه: 200 نقطة للسهل أو 600 للصعب! وإذا أخطأت الثاني يسرق',                g:'linear-gradient(150deg,#78350f,#451a03)', n:()=>'أسئلة × 3 مستويات',                go:()=>mgStart('bankq') },
+  { id:'imgcombo',t:'تحدي الصور',       ic:'🎴',  e1:'🖼️', e2:'🔗', d:'أبو عمر: ركّب الصور مع بعض وخمّن الكلمة أو العبارة — 10 نقاط بدون تلميح، 5 بتلميح!', g:'linear-gradient(150deg,#1e3a5f,#0c2a4a)', n:()=>(window.KHALLAD_EXTRA?.imgcombo.length||0)+' لغزة',  go:()=>mgStart('imgcombo') },
+  { id:'reveal',  t:'خمن بالخطوات',    ic:'🔭',  e1:'🔍', e2:'💫', d:'صور تنكشف خطوة بخطوة — كلما أسرعت في الجواب كسبت نقاط أكثر! البداية 10 والنهاية 2', g:'linear-gradient(150deg,#1a1040,#0f0a2e)', n:()=>(window.KHALLAD_EXTRA?.reveal.length||0)+' لغزة',   go:()=>mgStart('reveal') },
 ];
 
 $('hubGrid').innerHTML = HUBS.map((h, i) =>
@@ -1593,6 +1595,146 @@ GAMES.bankq = {
     } else sNone();
     clearInterval(mgTimerInt);
     if (MG.next) MG.next();
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// لعبة تحدي الصور (أبو عمر) — ركّب الصور وخمّن الكلمة
+// ══════════════════════════════════════════════════════════════
+GAMES.imgcombo = {
+  init() {
+    MG.title   = '🎴 تحدي الصور';
+    MG.icData  = (window.KHALLAD_EXTRA && window.KHALLAD_EXTRA.imgcombo) || [];
+    MG.icCat   = null;
+    MG.icQ     = null;
+    MG.icPts   = 10;
+    this.render();
+  },
+  render() {
+    const cats = [...new Set(MG.icData.map(q => q.cat))];
+    const chips = `<div class="chipbar">
+      <span class="fchip ${!MG.icCat?'onn':''}" onclick="GAMES.imgcombo.setCat(null)">🎲 الكل</span>
+      ${cats.map(c => `<span class="fchip ${MG.icCat===c?'onn':''}" onclick="GAMES.imgcombo.setCat(decodeURIComponent('${encodeURIComponent(c)}'))">${c}</span>`).join('')}
+    </div>`;
+    const total = MG.icData.length;
+    mgShell(MG.title,
+      chips + `<div id="icArea" class="center" style="padding:30px 16px;color:var(--muted);font-size:16px;font-weight:800">
+        اضغط «جولة جديدة» للبدء 🎴<br>
+        <span style="font-size:13px;opacity:.7">10 نقاط بدون تلميح — 5 نقاط بتلميح!</span>
+      </div>`,
+      '<button class="btn btn-main" onclick="sClick();GAMES.imgcombo.round()">🎴 جولة جديدة</button>');
+    MG.refresh = () => this.render();
+  },
+  setCat(cat) { sClick(); MG.icCat = cat; this.render(); },
+  round() {
+    const pool = MG.icCat ? MG.icData.filter(q => q.cat === MG.icCat) : MG.icData;
+    if (!pool.length) { toast('لا توجد ألغاز في هذه الفئة', 'warn'); return; }
+    MG.icQ   = pickNext('imgcombo_' + (MG.icCat || 'all'), pool);
+    MG.icPts = 10;
+    MG.next  = () => this.round();
+    this.drawRound();
+  },
+  drawRound() {
+    const q = MG.icQ;
+    const imgs = q.imgs.map(e =>
+      `<div class="ic-img">${e}</div>`).join('<div class="ic-plus">+</div>');
+    $('icArea').innerHTML =
+      `<div class="ic-row">${imgs}</div>
+       <div style="font-size:12px;font-weight:800;color:var(--muted);margin:8px 0 16px">${q.cat}</div>
+       <div class="ic-pts-badge" id="icPtsBadge">
+         <span style="font-size:28px;font-weight:900;color:var(--amber)">${MG.icPts}</span>
+         <span style="font-size:12px;font-weight:800;color:var(--muted);margin-right:4px">نقطة</span>
+       </div>
+       ${mgRing(35, () => GAMES.imgcombo.revealCurrent())}
+       <div class="mg-ctrl" style="gap:10px">
+         <button class="btn btn-amber btn-sm" id="icHintBtn" onclick="GAMES.imgcombo.showHint()">💡 تلميح (-5 نقاط)</button>
+         <button class="btn btn-cyan btn-sm" onclick="GAMES.imgcombo.revealCurrent()">اعرض الجواب 👀</button>
+       </div>
+       <div class="ansbox" id="icHintBox"></div>
+       <div class="ansbox" id="icAns"></div>
+       <div id="icJudge"></div>`;
+  },
+  showHint() {
+    clearInterval(mgTimerInt);
+    if (MG.icPts > 5) MG.icPts = 5;
+    const q = MG.icQ; if (!q) return;
+    $('icPtsBadge').innerHTML = `<span style="font-size:28px;font-weight:900;color:var(--amber)">${MG.icPts}</span><span style="font-size:12px;font-weight:800;color:var(--muted);margin-right:4px">نقطة</span>`;
+    $('icHintBox').innerHTML  = `💡 ${esc(q.hint)}`;
+    $('icHintBox').style.display = 'block';
+    const hb = $('icHintBtn'); if (hb) hb.disabled = true;
+    sOpen();
+  },
+  revealCurrent() {
+    clearInterval(mgTimerInt); sReveal();
+    const q = MG.icQ; if (!q) return;
+    $('icAns').innerHTML = `<div style="font-size:clamp(22px,4.5vw,30px);font-weight:900">${esc(q.answer)}</div>`;
+    $('icAns').style.display  = 'block';
+    $('icJudge').innerHTML = judge3(MG.icPts);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// لعبة التخمين التدريجي — كشف متدرج عن الإجابة
+// ══════════════════════════════════════════════════════════════
+GAMES.reveal = {
+  init() {
+    MG.title    = '🔭 خمن بالخطوات';
+    MG.rvData   = (window.KHALLAD_EXTRA && window.KHALLAD_EXTRA.reveal) || [];
+    MG.rvQ      = null;
+    MG.rvStep   = 0;
+    MG.next     = () => this.round();
+    this.render();
+  },
+  render() {
+    mgShell(MG.title,
+      `<div id="rvArea" class="center" style="padding:30px 16px;color:var(--muted);font-size:16px;font-weight:800">
+        اضغط «جولة جديدة» للبدء 🔭<br>
+        <span style="font-size:13px;opacity:.7">كلما أسرعت كسبت أكثر! البداية 10 والنهاية 2</span>
+      </div>`,
+      '<button class="btn btn-main" onclick="sClick();GAMES.reveal.round()">🔭 جولة جديدة</button>');
+    MG.refresh = () => this.render();
+  },
+  round() {
+    if (!MG.rvData.length) { toast('لا توجد ألغاز', 'warn'); return; }
+    MG.rvQ    = pickNext('reveal_all', MG.rvData);
+    MG.rvStep = 0;
+    MG.next   = () => this.round();
+    this.drawStep();
+  },
+  drawStep() {
+    const q    = MG.rvQ;
+    const step = MG.rvStep;
+    const clue = q.steps[step];
+    const pts  = q.pts[step];
+    const pct  = (step / (q.steps.length - 1)) * 100;
+    $('rvArea').innerHTML =
+      `<div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px">
+        ${q.pts.map((p, i) =>
+          `<div class="rv-step ${i < step ? 'past' : i === step ? 'active' : ''}">${p}</div>`).join('')}
+      </div>
+       <div class="rv-reveal-bar"><div class="rv-reveal-fill" style="width:${100 - pct}%"></div></div>
+       <div class="rv-clue" id="rvClue" style="animation:popIn .45s cubic-bezier(.34,1.56,.64,1)">${clue}</div>
+       <div style="font-size:13px;font-weight:800;color:var(--amber);margin-bottom:12px">${pts} نقطة إذا جاوبت الآن!</div>
+       <div class="mg-ctrl" style="gap:10px;flex-wrap:wrap;justify-content:center">
+         ${step < q.steps.length - 1
+           ? `<button class="btn btn-ghost btn-sm" onclick="GAMES.reveal.nextStep()">👁️ كشف أكثر (-${pts - q.pts[step+1]} نقطة)</button>`
+           : ''}
+         <button class="btn btn-cyan btn-sm" onclick="GAMES.reveal.revealAnswer()">اعرض الجواب 👀</button>
+       </div>
+       <div class="ansbox" id="rvAns"></div><div id="rvJudge"></div>`;
+  },
+  nextStep() {
+    sOpen();
+    MG.rvStep = Math.min(MG.rvStep + 1, MG.rvQ.steps.length - 1);
+    this.drawStep();
+  },
+  revealAnswer() {
+    clearInterval(mgTimerInt); sReveal();
+    const q = MG.rvQ; if (!q) return;
+    $('rvAns').innerHTML  = `<div style="font-size:clamp(22px,4.5vw,30px);font-weight:900">${esc(q.answer)}</div>
+      <div style="font-size:12.5px;color:rgba(52,211,153,.7);margin-top:6px">💡 ${esc(q.hint)}</div>`;
+    $('rvAns').style.display = 'block';
+    $('rvJudge').innerHTML   = judge3(q.pts[MG.rvStep]);
   }
 };
 

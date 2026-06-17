@@ -755,6 +755,99 @@ footer b{color:var(--mag)}
 .bank-cell.done,.bank-cell[disabled]:not(.done){background:rgba(29,21,69,.8)!important;color:rgba(74,63,138,.75)!important;cursor:default}
 @media(max-width:520px){.bank-row{grid-template-columns:1fr}.bcat{flex-direction:row;justify-content:center}}
 
+/* ══════════════════════════════════════════════
+   تحدي الصور (أبو عمر) — image combo game
+   ══════════════════════════════════════════════ */
+.ic-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:16px 8px;
+}
+.ic-img{
+  font-size:clamp(52px,12vw,90px);
+  line-height:1.2;
+  background:rgba(255,255,255,.06);
+  border:2px solid rgba(255,255,255,.14);
+  border-radius:20px;
+  padding:12px 16px;
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+.ic-plus{
+  font-size:clamp(24px,5vw,40px);
+  font-weight:900;
+  color:var(--mag);
+  line-height:1;
+  animation:pulse 1.5s ease-in-out infinite;
+}
+.ic-pts-badge{
+  display:inline-flex;
+  align-items:baseline;
+  gap:4px;
+  background:rgba(245,158,11,.12);
+  border:1.5px solid rgba(245,158,11,.3);
+  border-radius:14px;
+  padding:8px 18px;
+  margin-bottom:12px;
+}
+.btn-amber{
+  background:linear-gradient(135deg,#b45309,#78350f);
+  color:#fef3c7;
+}
+.btn-amber:hover{background:linear-gradient(135deg,#d97706,#92400e)}
+
+/* ══════════════════════════════════════════════
+   التخمين التدريجي — reveal game
+   ══════════════════════════════════════════════ */
+.rv-step{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;
+  background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.12);
+  color:var(--muted);
+  transition:all .25s;
+}
+.rv-step.active{
+  background:linear-gradient(135deg,var(--mag),var(--violet));
+  border-color:var(--mag);
+  color:#fff;
+  transform:scale(1.2);
+  box-shadow:0 0 16px rgba(217,70,239,.5);
+}
+.rv-step.past{
+  background:rgba(255,255,255,.04);
+  border-color:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.25);
+  text-decoration:line-through;
+}
+.rv-reveal-bar{
+  height:6px;
+  background:rgba(255,255,255,.1);
+  border-radius:99px;
+  margin:12px auto;
+  max-width:320px;
+  overflow:hidden;
+}
+.rv-reveal-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--cyan),var(--mag));
+  border-radius:99px;
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.rv-clue{
+  font-size:clamp(52px,13vw,100px);
+  text-align:center;
+  padding:12px 8px;
+  line-height:1.3;
+  min-height:130px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
 /* ── Reduced motion ── */
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
