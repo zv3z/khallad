@@ -159,14 +159,20 @@ fetch('/api/questions').then(r => r.json()).then(list => {
 
 function totalQ() {
   let n = Object.values(BANK).reduce((s, c) => s + c.qs.length, 0);
-  n += GM.pic ? (GM.pic.odd.length + GM.pic.zoom.length + GM.pic.riddle.length) : 0;
+  n += GM.pic     ? (GM.pic.odd.length + GM.pic.zoom.length + GM.pic.riddle.length) : 0;
   n += GM.riddles ? GM.riddles.length : 0;
-  n += GM.feud   ? GM.feud.length   : 0;
-  n += GM.who    ? GM.who.length    : 0;
-  n += GM.whofast? GM.whofast.length: 0;
-  n += GM.fast   ? GM.fast.length   : 0;
-  n += GM.letters? GM.letters.letters.length * (GM.letters.normal.length + GM.letters.speed.length) : 0;
-  n += GM.words  ? Object.values(GM.words).reduce((s,t) => s + Object.values(t).reduce((x,l) => x + l.length, 0), 0) : 0;
+  n += GM.feud    ? GM.feud.length    : 0;
+  n += GM.who     ? GM.who.length     : 0;
+  n += GM.whofast ? GM.whofast.length : 0;
+  n += GM.fast    ? GM.fast.length    : 0;
+  n += GM.letters ? GM.letters.letters.length * (GM.letters.normal.length + GM.letters.speed.length) : 0;
+  n += GM.words   ? Object.values(GM.words).reduce((s,t) => s + Object.values(t).reduce((x,l) => x + l.length, 0), 0) : 0;
+  const ex = window.KHALLAD_EXTRA;
+  if (ex) {
+    n += ex.guess    ? ex.guess.length    : 0;
+    n += ex.imgcombo ? ex.imgcombo.length : 0;
+    n += ex.reveal   ? ex.reveal.length   : 0;
+  }
   return n;
 }
 function fillStats() { $('statQ').textContent = totalQ().toLocaleString('ar-EG'); }
@@ -191,12 +197,37 @@ const HUBS = [
   { id:'reveal',  t:'خمن بالخطوات',    ic:'🔭',  e1:'🔍', e2:'💫', d:'صور تنكشف خطوة بخطوة — كلما أسرعت في الجواب كسبت نقاط أكثر! البداية 10 والنهاية 2', g:'linear-gradient(150deg,#1a1040,#0f0a2e)', n:()=>(window.KHALLAD_EXTRA?.reveal.length||0)+' لغزة',   go:()=>mgStart('reveal') },
 ];
 
-$('hubGrid').innerHTML = HUBS.map((h, i) =>
-  `<div class="game-card" style="background:${h.g}" onclick="sClick();HUBS[${i}].go()">
+function _card(h, i) {
+  const n    = typeof h.n === 'function' ? h.n() : h.n;
+  const isN  = i >= 9;
+  return `<div class="game-card${isN?' gc-new':''}" style="background:${h.g};animation-delay:${(i*0.048+0.05).toFixed(2)}s"
+    onclick="sClick();HUBS[${i}].go()">
+    ${isN ? '<span class="gc-badge">جديد ✨</span>' : ''}
     <span class="gc-emo e1">${h.e1}</span><span class="gc-emo e2">${h.e2}</span>
-    <span class="gc-n">${typeof h.n === 'function' ? h.n() : h.n}</span>
-    <span class="gc-ic">${h.ic}</span><div class="gc-t">${h.t}</div><div class="gc-d">${h.d}</div>
-  </div>`).join('');
+    <span class="gc-n">${n}</span>
+    <span class="gc-ic">${h.ic}</span>
+    <div class="gc-t">${h.t}</div>
+    <div class="gc-d">${h.d}</div>
+  </div>`;
+}
+function renderHub() {
+  const classic = HUBS.slice(0, 9);
+  const newer   = HUBS.slice(9);
+  $('hubGrid').innerHTML =
+    `<div class="hub-shdr">
+       <span class="hub-shdr-ic">🎮</span>
+       <span class="hub-shdr-txt">الألعاب الكلاسيكية</span>
+       <span class="hub-shdr-badge">${classic.length} ألعاب</span>
+     </div>
+     <div class="hub hub-classic">${classic.map((h, i) => _card(h, i)).join('')}</div>
+     <div class="hub-shdr hub-shdr-new">
+       <span class="hub-shdr-ic">✨</span>
+       <span class="hub-shdr-txt">ألعاب جديدة</span>
+       <span class="hub-shdr-badge badge-glow">جديد! ${newer.length} ألعاب</span>
+     </div>
+     <div class="hub hub-new">${newer.map((h, i) => _card(h, i + 9)).join('')}</div>`;
+}
+renderHub();
 
 function goHub() { sClick(); MG = null; clearInterval(mgTimerInt); show('scr-hub'); }
 
@@ -346,13 +377,25 @@ function addCustomQ() {
 // ─── Mini-games Engine ────────────────────────────────────────
 let MG = null, mgTimerInt = null;
 function mgTeamsBar() {
+  const [a, b] = MG.teams;
+  const aLead = a.score > b.score, bLead = b.score > a.score;
   return `<div class="mg-teams">
-    <div class="mgt a" onclick="mgRename(0)"><span style="font-size:20px">🟦</span>
-      <span class="n" id="mgn0">${esc(MG.teams[0].name)}</span>
-      <span class="s" id="mgs0">${MG.teams[0].score}</span></div>
-    <div class="mgt b" onclick="mgRename(1)"><span style="font-size:20px">🟪</span>
-      <span class="n" id="mgn1">${esc(MG.teams[1].name)}</span>
-      <span class="s" id="mgs1">${MG.teams[1].score}</span></div>
+    <div class="mgt a${aLead?' mgt-lead':''}" onclick="mgRename(0)">
+      <span class="mgt-emo">🟦</span>
+      <div class="mgt-info">
+        <span class="n" id="mgn0">${esc(a.name)}</span>
+        <span class="mgt-sub">${aLead?'✦ يتقدم':'✏️ تعديل الاسم'}</span>
+      </div>
+      <span class="s" id="mgs0">${a.score}</span>
+    </div>
+    <div class="mgt b${bLead?' mgt-lead':''}" onclick="mgRename(1)">
+      <span class="mgt-emo">🟪</span>
+      <div class="mgt-info">
+        <span class="n" id="mgn1">${esc(b.name)}</span>
+        <span class="mgt-sub">${bLead?'✦ يتقدم':'✏️ تعديل الاسم'}</span>
+      </div>
+      <span class="s" id="mgs1">${b.score}</span>
+    </div>
   </div>`;
 }
 function mgRename(i) {
@@ -418,15 +461,29 @@ function mgEnd() {
   const resultText = tie
     ? `تعادل في ${MG.title}! ${a.name}: ${a.score} • ${b.name}: ${b.score}`
     : `${w.name} فاز في ${MG.title} بنتيجة ${w.score} نقطة 🏆`;
+  const total = a.score + b.score;
+  const aW = total ? Math.round((a.score / total) * 100) : 50;
+  const bW = total ? 100 - aW : 50;
   modal(`<div class="winner-pop">
     <span class="t">${tie ? '🤝' : '🏆'}</span>
-    <div style="color:var(--muted);font-weight:800">${tie ? 'تعادل!' : 'الفائز'}</div>
+    <div class="wp-sub">${tie ? 'تعادل!' : 'الفائز'}</div>
     <div class="wn">${tie ? (a.score+' : '+b.score) : esc(w.name)+' 🎉'}</div>
-    <div style="font-weight:800;margin:10px 0;color:var(--muted)">${esc(a.name)}: ${a.score} • ${esc(b.name)}: ${b.score}</div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+    <div class="wp-scores">
+      <div class="wp-sr">
+        <span class="wp-sn a">${esc(a.name)}</span>
+        <div class="wp-barwrap"><div class="wp-bar wp-a" style="--w:${aW}%"></div></div>
+        <span class="wp-sc">${a.score}</span>
+      </div>
+      <div class="wp-sr">
+        <span class="wp-sn b">${esc(b.name)}</span>
+        <div class="wp-barwrap"><div class="wp-bar wp-b" style="--w:${bW}%"></div></div>
+        <span class="wp-sc">${b.score}</span>
+      </div>
+    </div>
+    <div class="wp-btns">
       <button class="btn btn-main btn-sm" onclick="closeModal();goHub()">🏠 الرئيسية</button>
       <button class="btn btn-ghost btn-sm" onclick="closeModal();mgStart(MG.id)">🔄 جولة جديدة</button>
-      <button class="btn btn-ghost btn-sm" onclick="shareResult(MG.title,'${esc(resultText)}')">مشاركة 🎉</button>
+      <button class="btn btn-ghost btn-sm" onclick="shareResult(MG.title,decodeURIComponent('${encodeURIComponent(resultText)}'))">مشاركة 🎉</button>
     </div>
   </div>`);
   if (!tie) { sWin(); confetti(); }
@@ -1541,7 +1598,7 @@ GAMES.bankq = {
         const has  = cat.qs.some(q => q.p === lvl);
         const done = MG.bankDone[key + '_' + lvl];
         return `<button class="bank-cell p${lvl} ${done ? 'done' : ''}"
-          onclick="GAMES.bankq.pickQ('${key}',${lvl})" ${(!has || done) ? 'disabled' : ''}>
+          onclick="GAMES.bankq.pickQ(decodeURIComponent('${encodeURIComponent(key)}'),${lvl})" ${(!has || done) ? 'disabled' : ''}>
           ${done ? '✓' : lvl + ' 💰'}</button>`;
       }).join('');
       return `<div class="bank-row">
@@ -1704,20 +1761,23 @@ GAMES.reveal = {
   drawStep() {
     const q    = MG.rvQ;
     const step = MG.rvStep;
-    const clue = q.steps[step];
     const pts  = q.pts[step];
     const pct  = (step / (q.steps.length - 1)) * 100;
+    // Show all revealed clues cumulatively
+    const clueHTML = q.steps.slice(0, step + 1).map((c, i) =>
+      `<span class="rv-emoji ${i < step ? 'rv-old' : 'rv-latest'}" style="animation-delay:${i*0.1}s">${c}</span>`
+    ).join('');
     $('rvArea').innerHTML =
-      `<div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px">
+      `<div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px">
         ${q.pts.map((p, i) =>
           `<div class="rv-step ${i < step ? 'past' : i === step ? 'active' : ''}">${p}</div>`).join('')}
       </div>
        <div class="rv-reveal-bar"><div class="rv-reveal-fill" style="width:${100 - pct}%"></div></div>
-       <div class="rv-clue" id="rvClue" style="animation:popIn .45s cubic-bezier(.34,1.56,.64,1)">${clue}</div>
-       <div style="font-size:13px;font-weight:800;color:var(--amber);margin-bottom:12px">${pts} نقطة إذا جاوبت الآن!</div>
+       <div class="rv-clue-row">${clueHTML}</div>
+       <div style="font-size:13px;font-weight:800;color:var(--amber);margin:6px 0 12px">${pts} نقطة إذا جاوبت الآن!</div>
        <div class="mg-ctrl" style="gap:10px;flex-wrap:wrap;justify-content:center">
          ${step < q.steps.length - 1
-           ? `<button class="btn btn-ghost btn-sm" onclick="GAMES.reveal.nextStep()">👁️ كشف أكثر (-${pts - q.pts[step+1]} نقطة)</button>`
+           ? `<button class="btn btn-ghost btn-sm" onclick="GAMES.reveal.nextStep()">👁️ كشف أكثر <small>(-${pts - q.pts[step+1]} نقطة)</small></button>`
            : ''}
          <button class="btn btn-cyan btn-sm" onclick="GAMES.reveal.revealAnswer()">اعرض الجواب 👀</button>
        </div>
