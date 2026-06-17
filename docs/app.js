@@ -172,6 +172,7 @@ function totalQ() {
     n += ex.guess    ? ex.guess.length    : 0;
     n += ex.imgcombo ? ex.imgcombo.length : 0;
     n += ex.reveal   ? ex.reveal.length   : 0;
+    n += ex.rebus    ? ex.rebus.length    : 0;
   }
   return n;
 }
@@ -193,7 +194,7 @@ const HUBS = [
   { id:'harf',  t:'حروف وألوف',         ic:'⬡',  e1:'🔤', e2:'🎯', d:'شبكة 25 حرف: كل حرف سؤال! اختر الحرف وجاوب وادّعِ الخلية قبل منافسك',          g:'linear-gradient(150deg,#3b0764,#6b21a8)', n:()=>'25 حرف × أسئلة لا تنتهي',          go:()=>mgStart('harf') },
   { id:'midan', t:'الميدان',             ic:'🏟️', e1:'⚔️', e2:'🏆', d:'تنافس على مربعات الميدان! أجب على السؤال وادّعِ المنطقة • من يملأ الميدان يفوز', g:'linear-gradient(150deg,#064e3b,#022c22)', n:()=>'12 فئة × جولات لا تنتهي',           go:()=>mgStart('midan') },
   { id:'bankq',   t:'بنك الأسئلة',      ic:'💰',  e1:'💵', e2:'🏦', d:'اختار السؤال اللي تبيه: 200 نقطة للسهل أو 600 للصعب! وإذا أخطأت الثاني يسرق',                g:'linear-gradient(150deg,#78350f,#451a03)', n:()=>'أسئلة × 3 مستويات',                go:()=>mgStart('bankq') },
-  { id:'imgcombo',t:'تحدي الصور',       ic:'🎴',  e1:'🖼️', e2:'🔗', d:'أبو عمر: ركّب الصور مع بعض وخمّن الكلمة أو العبارة — 10 نقاط بدون تلميح، 5 بتلميح!', g:'linear-gradient(150deg,#1e3a5f,#0c2a4a)', n:()=>(window.KHALLAD_EXTRA?.imgcombo.length||0)+' لغزة',  go:()=>mgStart('imgcombo') },
+  { id:'imgcombo',t:'ركّب الصور',        ic:'🎴',  e1:'🖼️', e2:'🔗', d:'أبو عمر: ركّب الصور مع بعض وخمّن الكلمة أو العبارة — 10 نقاط بدون تلميح، 5 بتلميح!', g:'linear-gradient(150deg,#1e3a5f,#0c2a4a)', n:()=>(window.KHALLAD_EXTRA?.imgcombo.length||0)+' لغزة',  go:()=>mgStart('imgcombo') },
   { id:'reveal',  t:'خمن بالخطوات',    ic:'🔭',  e1:'🔍', e2:'💫', d:'صور تنكشف خطوة بخطوة — كلما أسرعت في الجواب كسبت نقاط أكثر! البداية 10 والنهاية 2', g:'linear-gradient(150deg,#1a1040,#0f0a2e)', n:()=>(window.KHALLAD_EXTRA?.reveal.length||0)+' لغزة',   go:()=>mgStart('reveal') },
 ];
 
@@ -581,7 +582,7 @@ GAMES.let = {
       const P = pickNext('let_P', all);
       wheel.textContent = L; sReveal();
       $('letPrompt').innerHTML = `<b style="color:var(--amber)">${esc(P)}</b>${P.startsWith('⚡')?'':' يبدأ بحرف'} <b style="color:var(--cyan);font-size:1.3em">(${L})</b>`;
-      $('letTimer').innerHTML = mgRing(10, () => { $('letJudge').innerHTML = judge3(1); });
+      $('letTimer').innerHTML = mgRing(10, () => {});
       $('letJudge').innerHTML = judge3(1);
     }, 1400);
   },
@@ -1414,11 +1415,26 @@ GAMES.guess = {
 // ══════════════════════════════════════════════════════════════
 GAMES.harf = {
   LETTERS: 'بتثجحخدذرزسشصضطظعغفقكلمنه'.split(''),
+  _letterIdx: null,
+  _buildIndex() {
+    const idx = {};
+    for (const cat of Object.values(BANK)) {
+      for (const q of cat.qs) {
+        const ch = (q.a || '').trimStart().charAt(0);
+        if (!ch) continue;
+        if (!idx[ch]) idx[ch] = [];
+        idx[ch].push({ ...q, catName: cat.name, catIc: cat.ic });
+      }
+    }
+    return idx;
+  },
   init() {
     MG.title = '⬡ حروف وألوف';
-    MG.harfCells = this.LETTERS.map(l => ({ letter: l, owner: null }));
-    MG.harfTurn  = 0;
+    MG.harfCells   = this.LETTERS.map(l => ({ letter: l, owner: null }));
+    MG.harfTurn    = 0;
     MG.harfCellIdx = -1;
+    MG.harfUsed    = {};
+    this._letterIdx = this._buildIndex();
     this.renderBoard();
   },
   renderBoard() {
@@ -1445,18 +1461,17 @@ GAMES.harf = {
     const letter = MG.harfCells[i].letter;
     MG.harfCellIdx = i;
     sOpen();
-    const pool = [];
-    for (const cat of Object.values(BANK)) {
-      for (const q of cat.qs) {
-        const firstChar = (q.a || '').trimStart().charAt(0);
-        if (firstChar === letter) pool.push({ ...q, catName: cat.name, catIc: cat.ic });
-      }
-    }
-    if (!pool.length) {
+    const allPool = (this._letterIdx && this._letterIdx[letter]) || [];
+    if (!allPool.length) {
       toast(`لا توجد أسئلة بحرف "${letter}"، اختر حرفاً آخر`, 'warn');
       return;
     }
-    const q = pool[Math.floor(Math.random() * pool.length)];
+    if (!MG.harfUsed[letter]) MG.harfUsed[letter] = [];
+    let avail = allPool.map((_, j) => j).filter(j => !MG.harfUsed[letter].includes(j));
+    if (!avail.length) { MG.harfUsed[letter] = []; avail = allPool.map((_, j) => j); }
+    const qi = avail[Math.floor(Math.random() * avail.length)];
+    MG.harfUsed[letter].push(qi);
+    const q = allPool[qi];
     MG.harfQ = q;
     $('harfQArea').innerHTML =
       `<div style="margin:14px 0;padding:16px;background:rgba(13,6,46,.95);border-radius:16px;border:1px solid rgba(255,255,255,.13)">
@@ -1510,9 +1525,10 @@ GAMES.midan = {
     MG.title = '🏟️ الميدان';
     const allCats = Object.keys(BANK);
     const picked  = allCats.slice().sort(() => Math.random() - .5).slice(0, 12);
-    MG.midanCells = picked.map(key => ({ key, owner: null }));
-    MG.midanTurn  = 0;
+    MG.midanCells   = picked.map(key => ({ key, owner: null }));
+    MG.midanTurn    = 0;
     MG.midanCellIdx = -1;
+    MG.midanUsed    = {};
     this.renderBoard();
   },
   renderBoard() {
@@ -1541,7 +1557,12 @@ GAMES.midan = {
     const cat = BANK[key];
     if (!cat || !cat.qs.length) return;
     MG.midanCellIdx = i;
-    const q = cat.qs[Math.floor(Math.random() * cat.qs.length)];
+    const used = MG.midanUsed[key] || [];
+    let avail = cat.qs.filter((_, j) => !used.includes(j));
+    if (!avail.length) { MG.midanUsed[key] = []; avail = cat.qs; }
+    const qi = cat.qs.indexOf(avail[Math.floor(Math.random() * avail.length)]);
+    (MG.midanUsed[key] = MG.midanUsed[key] || []).push(qi);
+    const q = cat.qs[qi];
     MG.midanQ = q;
     sOpen();
     $('midanQArea').innerHTML =
@@ -1593,23 +1614,27 @@ GAMES.bankq = {
   render() {
     const cats   = Object.entries(BANK).slice(0, 8);
     const levels = [200, 400, 600];
+    const totalCells = cats.length * levels.length;
+    const doneCells  = Object.keys(MG.bankDone).length;
+    const allDone    = doneCells >= totalCells;
     const rows = cats.map(([key, cat]) => {
       const btns = levels.map(lvl => {
         const has  = cat.qs.some(q => q.p === lvl);
         const done = MG.bankDone[key + '_' + lvl];
         return `<button class="bank-cell p${lvl} ${done ? 'done' : ''}"
           onclick="GAMES.bankq.pickQ(decodeURIComponent('${encodeURIComponent(key)}'),${lvl})" ${(!has || done) ? 'disabled' : ''}>
-          ${done ? '✓' : lvl + ' 💰'}</button>`;
+          ${done ? '✓' : lvl}</button>`;
       }).join('');
       return `<div class="bank-row">
         <div class="bcat"><span style="font-size:20px">${cat.ic}</span><span style="font-size:12px;font-weight:800">${esc(cat.name)}</span></div>
         <div class="bank-pts">${btns}</div>
       </div>`;
     }).join('');
+    const hdr = allDone
+      ? `<div style="text-align:center;padding:10px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:12px;margin-bottom:10px;font-weight:800;color:var(--grn)">🎉 انتهت جميع الأسئلة! <button class="btn btn-ghost btn-sm" style="margin-right:10px" onclick="MG.bankDone={};GAMES.bankq.render()">🔄 جولة جديدة</button></div>`
+      : `<div style="font-size:12.5px;color:var(--muted);font-weight:800;padding:4px 2px;margin-bottom:8px">اختر فئة ونقاط — إذا أخطأت، الفريق الثاني يسرق! 🔥 <span style="color:var(--amber)">${doneCells}/${totalCells}</span></div>`;
     mgShell(MG.title,
-      `<div style="font-size:12.5px;color:var(--muted);font-weight:800;padding:4px 2px;margin-bottom:8px">اختر فئة ونقاط — إذا أخطأت، الفريق الثاني يسرق! 🔥</div>
-       <div class="bank-board">${rows}</div>
-       <div id="bankQArea"></div>`, '');
+      hdr + `<div class="bank-board">${rows}</div><div id="bankQArea"></div>`, '');
     MG.refresh = () => this.render();
   },
   pickQ(key, lvl) {
@@ -1644,7 +1669,7 @@ GAMES.bankq = {
     MG.bankDone[key + '_' + lvl] = true;
   },
   award(team) {
-    const pts = MG.bankMeta ? MG.bankMeta.lvl / 100 : 1;
+    const pts = MG.bankMeta ? MG.bankMeta.lvl : 1;
     if (team !== null) {
       MG.teams[team].score += pts; sAward();
       const el = $('mgs' + team);
@@ -1660,7 +1685,7 @@ GAMES.bankq = {
 // ══════════════════════════════════════════════════════════════
 GAMES.imgcombo = {
   init() {
-    MG.title   = '🎴 تحدي الصور';
+    MG.title   = '🎴 ركّب الصور';
     MG.icData  = (window.KHALLAD_EXTRA && window.KHALLAD_EXTRA.imgcombo) || [];
     MG.icCat   = null;
     MG.icQ     = null;

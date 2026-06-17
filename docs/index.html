@@ -15,8 +15,10 @@
 <meta property="og:locale" content="ar_SA">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="خَلّد — منصة ألعاب أبو خالد">
-<meta name="twitter:description" content="9 ألعاب عائلية تفاعلية — العب أونلاين مع أصدقاءك الآن!">
+<meta name="twitter:description" content="15 لعبة عائلية تفاعلية — العب أونلاين مع أصدقاءك الآن!">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════
@@ -848,7 +850,8 @@ footer b{color:var(--mag)}
 .bank-cell.p200{background:linear-gradient(180deg,#34e3f7,#0891b2);color:#042c38}
 .bank-cell.p400{background:linear-gradient(180deg,#a78bfa,#7c3aed)}
 .bank-cell.p600{background:linear-gradient(180deg,#f06ad8,#c026d3)}
-.bank-cell.done,.bank-cell[disabled]:not(.done){background:rgba(29,21,69,.8)!important;color:rgba(74,63,138,.75)!important;cursor:default}
+.bank-cell.done{background:rgba(52,211,153,.12)!important;color:rgba(52,211,153,.5)!important;cursor:default;border:1.5px solid rgba(52,211,153,.22)!important}
+.bank-cell[disabled]:not(.done){background:rgba(29,21,69,.8)!important;color:rgba(74,63,138,.75)!important;cursor:default}
 @media(max-width:520px){.bank-row{grid-template-columns:1fr}.bcat{flex-direction:row;justify-content:center}}
 
 /* ══════════════════════════════════════════════
@@ -1248,9 +1251,9 @@ footer b{color:var(--mag)}
 
 <div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
 
-<script src="questions.js"></script>
-<script src="games.js"></script>
-<script src="games2.js"></script>
+<script src="questions.js" defer></script>
+<script src="games.js" defer></script>
+<script src="games2.js" defer></script>
 <script src="app.js" defer></script>
 </body>
 </html>
