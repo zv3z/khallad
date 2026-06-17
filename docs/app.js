@@ -182,7 +182,11 @@ const HUBS = [
   { id:'wb',   t:'بنك الكلمات',         ic:'🎭', e1:'✏️', e2:'🃏', d:'مثّل، ارسم، أو اشرح الكلمة وخل فريقك يخمّن',            g:'linear-gradient(150deg,#047857,#022c22)', n:()=>Object.values(GM.words).reduce((s,t)=>s+Object.values(t).reduce((x,l)=>x+l.length,0),0)+' كلمة', go:()=>mgStart('wb') },
   { id:'who',  t:'من أنا؟',             ic:'🕵️', e1:'❔', e2:'🎩', d:'تلميحات من الصعب للسهل… كل تلميح ينقص نقاطك',          g:'linear-gradient(150deg,#7c2d12,#3b0764)', n:()=>GM.who.length+' شخصية', go:()=>mgStart('who') },
   { id:'wf',   t:'من الشخصية؟',        ic:'⚡', e1:'👤', e2:'💨', d:'3 تلميحات سريعة وجولات خاطفة',                           g:'linear-gradient(150deg,#be123c,#4c0519)', n:()=>GM.whofast.length+' شخصية', go:()=>mgStart('wf') },
-  { id:'fast', t:'مين أسرع واحد؟',     ic:'🏁', e1:'🏃', e2:'⏱️', d:'أوامر لحظية: أول واحد يسوّيها ياخذ النقطة!',            g:'linear-gradient(150deg,#a16207,#422006)', n:()=>GM.fast.length+' أمر', go:()=>mgStart('fast') },
+  { id:'fast',  t:'مين أسرع واحد؟',    ic:'🏁', e1:'🏃', e2:'⏱️', d:'أوامر لحظية: أول واحد يسوّيها ياخذ النقطة!',                                   g:'linear-gradient(150deg,#a16207,#422006)', n:()=>GM.fast.length+' أمر',           go:()=>mgStart('fast') },
+  { id:'guess', t:'خمن الصورة',         ic:'🖼️', e1:'👁️', e2:'❓', d:'ألغاز إيموجي بصرية: خمّن الأكلة أو المدينة أو الشخصية من الصور!',                g:'linear-gradient(150deg,#0c4a6e,#075985)', n:()=>(window.KHALLAD_EXTRA?.guess.length||0)+' لغزة',  go:()=>mgStart('guess') },
+  { id:'harf',  t:'حروف وألوف',         ic:'⬡',  e1:'🔤', e2:'🎯', d:'شبكة 25 حرف: كل حرف سؤال! اختر الحرف وجاوب وادّعِ الخلية قبل منافسك',          g:'linear-gradient(150deg,#3b0764,#6b21a8)', n:()=>'25 حرف × أسئلة لا تنتهي',          go:()=>mgStart('harf') },
+  { id:'midan', t:'الميدان',             ic:'🏟️', e1:'⚔️', e2:'🏆', d:'تنافس على مربعات الميدان! أجب على السؤال وادّعِ المنطقة • من يملأ الميدان يفوز', g:'linear-gradient(150deg,#064e3b,#022c22)', n:()=>'12 فئة × جولات لا تنتهي',           go:()=>mgStart('midan') },
+  { id:'bankq', t:'بنك الأسئلة',        ic:'💰', e1:'💵', e2:'🏦', d:'اختار السؤال اللي تبيه: 200 نقطة للسهل أو 600 للصعب! وإذا أخطأت الثاني يسرق',   g:'linear-gradient(150deg,#78350f,#451a03)', n:()=>'أسئلة × 3 مستويات',               go:()=>mgStart('bankq') },
 ];
 
 $('hubGrid').innerHTML = HUBS.map((h, i) =>
@@ -1301,6 +1305,297 @@ function aiAutoAnswer(pts, onAIWins) {
     }, delay);
   }
 }
+// ══════════════════════════════════════════════════════════════
+// لعبة خمن الصورة — ألغاز بصرية بالإيموجي
+// ══════════════════════════════════════════════════════════════
+GAMES.guess = {
+  init() {
+    MG.title = '🖼️ خمن الصورة';
+    MG.gCat = null;
+    MG.gData = (window.KHALLAD_EXTRA && window.KHALLAD_EXTRA.guess) || [];
+    this.render();
+  },
+  render() {
+    const cats = [...new Set(MG.gData.map(q => q.cat))];
+    const chipbar = `<div class="chipbar">
+      <span class="fchip ${!MG.gCat?'onn':''}" onclick="GAMES.guess.setCat(null)">🎲 الكل</span>
+      ${cats.map(c => `<span class="fchip ${MG.gCat===c?'onn':''}" onclick="GAMES.guess.setCat(decodeURIComponent('${encodeURIComponent(c)}'))">${c}</span>`).join('')}
+    </div>`;
+    mgShell(MG.title,
+      chipbar + '<div id="guessArea" class="center" style="padding:30px 16px;color:var(--muted);font-size:16px;font-weight:800">اضغط «جولة جديدة» للبدء 🎲</div>',
+      '<button class="btn btn-main" onclick="sClick();GAMES.guess.round()">🎲 جولة جديدة</button>');
+    MG.refresh = () => this.render();
+  },
+  setCat(cat) { sClick(); MG.gCat = cat; this.render(); },
+  round() {
+    const pool = MG.gCat ? MG.gData.filter(q => q.cat === MG.gCat) : MG.gData;
+    if (!pool.length) { toast('لا توجد ألغاز في هذه الفئة', 'warn'); return; }
+    MG.gQ = pickNext('guess_' + (MG.gCat || 'all'), pool);
+    const q = MG.gQ;
+    MG.next = () => this.round();
+    $('guessArea').innerHTML =
+      `<div style="font-size:clamp(56px,14vw,100px);text-align:center;line-height:1.3;padding:16px 8px;animation:popIn .45s cubic-bezier(.34,1.56,.64,1)">${q.clue}</div>
+       <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:14px;letter-spacing:.5px">${q.cat}</div>
+       ${mgRing(30, () => GAMES.guess.revealCurrent())}
+       <div class="mg-ctrl"><button class="btn btn-cyan btn-sm" onclick="GAMES.guess.revealCurrent()">اعرض الجواب 👀</button></div>
+       <div class="ansbox" id="gAns"></div><div id="gJudge"></div>`;
+  },
+  revealCurrent() {
+    const q = MG.gQ; if (!q) return;
+    clearInterval(mgTimerInt); sReveal();
+    $('gAns').innerHTML = `<div style="font-size:clamp(22px,4.5vw,30px);font-weight:900">${esc(q.answer)}</div>
+      <div style="font-size:12.5px;color:rgba(52,211,153,.7);margin-top:6px">💡 ${esc(q.hint)}</div>`;
+    $('gAns').style.display = 'block';
+    $('gJudge').innerHTML = judge3(2);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// لعبة حروف وألوف — شبكة حروف تنافسية
+// ══════════════════════════════════════════════════════════════
+GAMES.harf = {
+  LETTERS: 'بتثجحخدذرزسشصضطظعغفقكلمنه'.split(''),
+  init() {
+    MG.title = '⬡ حروف وألوف';
+    MG.harfCells = this.LETTERS.map(l => ({ letter: l, owner: null }));
+    MG.harfTurn  = 0;
+    MG.harfCellIdx = -1;
+    this.renderBoard();
+  },
+  renderBoard() {
+    const cells = MG.harfCells.map((c, i) => {
+      const bg = c.owner === 0 ? '#0e4f6e' : c.owner === 1 ? '#5b1ca6' : '#1d1145';
+      const border = c.owner === 0 ? '2px solid #22d3ee' : c.owner === 1 ? '2px solid #a855f7' : '2px solid rgba(255,255,255,.18)';
+      return `<button class="harf-cell" style="background:${bg};border:${border}"
+        onclick="GAMES.harf.pickCell(${i})" ${c.owner !== null ? 'disabled' : ''}>${c.letter}</button>`;
+    }).join('');
+    const turnColor = MG.harfTurn === 0 ? 'var(--cyan)' : 'var(--mag)';
+    const turnName  = esc(MG.teams[MG.harfTurn].name);
+    mgShell(MG.title,
+      `<div class="midtext" style="padding:8px 4px;font-size:16px">دور <b style="color:${turnColor}">${turnName}</b> — اختر حرفاً 👇</div>
+       <div class="harf-grid">${cells}</div>
+       <div id="harfQArea"></div>`,
+      `<div style="display:flex;gap:10px;margin-top:8px">
+        <div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:#0e4f6e;font-family:Lalezar;font-size:18px">🟦 ${esc(MG.teams[0].name)} — <span id="harfS0">${MG.teams[0].score}</span></div>
+        <div style="flex:1;text-align:center;padding:10px;border-radius:12px;background:#5b1ca6;font-family:Lalezar;font-size:18px">🟪 ${esc(MG.teams[1].name)} — <span id="harfS1">${MG.teams[1].score}</span></div>
+      </div>`);
+    MG.refresh = () => this.renderBoard();
+  },
+  pickCell(i) {
+    if (MG.harfCells[i].owner !== null) return;
+    const letter = MG.harfCells[i].letter;
+    MG.harfCellIdx = i;
+    sOpen();
+    const pool = [];
+    for (const cat of Object.values(BANK)) {
+      for (const q of cat.qs) {
+        const firstChar = (q.a || '').trimStart().charAt(0);
+        if (firstChar === letter) pool.push({ ...q, catName: cat.name, catIc: cat.ic });
+      }
+    }
+    if (!pool.length) {
+      toast(`لا توجد أسئلة بحرف "${letter}"، اختر حرفاً آخر`, 'warn');
+      return;
+    }
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    MG.harfQ = q;
+    $('harfQArea').innerHTML =
+      `<div style="margin:14px 0;padding:16px;background:rgba(13,6,46,.95);border-radius:16px;border:1px solid rgba(255,255,255,.13)">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px">${q.catIc} ${esc(q.catName)} • الجواب يبدأ بـ <b style="color:var(--amber);font-size:22px;font-family:Lalezar">${letter}</b></div>
+        <div style="font-size:clamp(16px,3.2vw,22px);font-weight:800;line-height:1.75">${esc(q.q)}</div>
+      </div>
+      ${mgRing(25, () => GAMES.harf.revealQ())}
+      <div class="mg-ctrl"><button class="btn btn-cyan btn-sm" onclick="GAMES.harf.revealQ()">الجواب 👀</button></div>
+      <div class="ansbox" id="harfAns"></div><div id="harfJudge"></div>`;
+  },
+  revealQ() {
+    clearInterval(mgTimerInt); sReveal();
+    const q = MG.harfQ; if (!q) return;
+    $('harfAns').textContent = '✅ ' + q.a;
+    $('harfAns').style.display = 'block';
+    $('harfJudge').innerHTML =
+      `<div class="judge3" style="margin-top:14px">
+        <button class="jj-a" onclick="GAMES.harf.awardCell(0)">🟦 ${esc(MG.teams[0].name)} ✓</button>
+        <button class="jj-b" onclick="GAMES.harf.awardCell(1)">🟪 ${esc(MG.teams[1].name)} ✓</button>
+        <button class="jj-n" onclick="GAMES.harf.skipCell()">محد جاوب 😅</button>
+      </div>`;
+  },
+  awardCell(team) {
+    const i = MG.harfCellIdx; if (i < 0) return;
+    MG.harfCells[i].owner = team;
+    MG.teams[team].score += 2; sAward();
+    const s = document.getElementById('harfS' + team);
+    if (s) s.textContent = MG.teams[team].score;
+    MG.harfTurn = 1 - MG.harfTurn;
+    if (MG.harfCells.every(c => c.owner !== null)) { mgEnd(); return; }
+    if (this.checkWin() !== null) { mgEnd(); return; }
+    setTimeout(() => this.renderBoard(), 500);
+  },
+  skipCell() { MG.harfTurn = 1 - MG.harfTurn; setTimeout(() => this.renderBoard(), 400); },
+  checkWin() {
+    const g = MG.harfCells;
+    for (let team = 0; team < 2; team++) {
+      for (let r = 0; r < 5; r++) if ([0,1,2,3,4].every(c => g[r*5+c] && g[r*5+c].owner === team)) return team;
+      for (let c = 0; c < 5; c++) if ([0,1,2,3,4].every(r => g[r*5+c] && g[r*5+c].owner === team)) return team;
+    }
+    return null;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// لعبة الميدان — غزو فئات الميدان
+// ══════════════════════════════════════════════════════════════
+GAMES.midan = {
+  CATS: null,
+  init() {
+    MG.title = '🏟️ الميدان';
+    const allCats = Object.keys(BANK);
+    const picked  = allCats.slice().sort(() => Math.random() - .5).slice(0, 12);
+    MG.midanCells = picked.map(key => ({ key, owner: null }));
+    MG.midanTurn  = 0;
+    MG.midanCellIdx = -1;
+    this.renderBoard();
+  },
+  renderBoard() {
+    const cells = MG.midanCells.map((cell, i) => {
+      const cat = BANK[cell.key] || {};
+      const bg  = cell.owner === 0 ? 'rgba(14,79,110,.92)' : cell.owner === 1 ? 'rgba(91,28,166,.92)' : 'rgba(21,11,51,.82)';
+      const bdr = cell.owner === 0 ? 'var(--cyan)' : cell.owner === 1 ? 'var(--mag)' : 'rgba(255,255,255,.12)';
+      const tick = cell.owner === 0 ? '🟦' : cell.owner === 1 ? '🟪' : '';
+      return `<div class="midan-cell ${cell.owner !== null ? 'claimed' : ''}"
+        style="background:${bg};border:1.5px solid ${bdr}"
+        onclick="GAMES.midan.pickCell(${i})">
+        <div style="font-size:26px">${tick || cat.ic || '❓'}</div>
+        <div style="font-size:11.5px;font-weight:800;margin-top:4px;color:${cell.owner !== null ? 'rgba(255,255,255,.9)' : 'var(--muted)'}">${esc(cat.name || '')}</div>
+      </div>`;
+    }).join('');
+    const turnColor = MG.midanTurn === 0 ? 'var(--cyan)' : 'var(--mag)';
+    mgShell(MG.title,
+      `<div class="midtext" style="padding:6px 4px;font-size:15px">دور <b style="color:${turnColor}">${esc(MG.teams[MG.midanTurn].name)}</b> — اختر فئة 👇</div>
+       <div class="midan-grid">${cells}</div>
+       <div id="midanQArea"></div>`, '');
+    MG.refresh = () => this.renderBoard();
+  },
+  pickCell(i) {
+    if (MG.midanCells[i].owner !== null) { toast('هذه المنطقة محجوزة بالفعل، اختر غيرها', 'warn'); return; }
+    const key = MG.midanCells[i].key;
+    const cat = BANK[key];
+    if (!cat || !cat.qs.length) return;
+    MG.midanCellIdx = i;
+    const q = cat.qs[Math.floor(Math.random() * cat.qs.length)];
+    MG.midanQ = q;
+    sOpen();
+    $('midanQArea').innerHTML =
+      `<div style="margin:14px 0;padding:16px;background:rgba(13,6,46,.95);border-radius:16px;border:1px solid rgba(255,255,255,.13)">
+        <div style="font-size:12px;font-weight:800;color:var(--muted);margin-bottom:8px">${cat.ic} ${esc(cat.name)} • <span style="color:var(--amber)">${q.p} نقطة</span></div>
+        <div style="font-size:clamp(16px,3.2vw,22px);font-weight:800;line-height:1.75">${esc(q.q)}</div>
+      </div>
+      ${mgRing(30, () => GAMES.midan.revealQ())}
+      <div class="mg-ctrl"><button class="btn btn-cyan btn-sm" onclick="GAMES.midan.revealQ()">الجواب 👀</button></div>
+      <div class="ansbox" id="midanAns"></div><div id="midanJudge"></div>`;
+  },
+  revealQ() {
+    clearInterval(mgTimerInt); sReveal();
+    const q = MG.midanQ; if (!q) return;
+    $('midanAns').textContent = '✅ ' + q.a;
+    $('midanAns').style.display = 'block';
+    $('midanJudge').innerHTML =
+      `<div class="judge3" style="margin-top:14px">
+        <button class="jj-a" onclick="GAMES.midan.claimCell(0)">🟦 ${esc(MG.teams[0].name)} ✓</button>
+        <button class="jj-b" onclick="GAMES.midan.claimCell(1)">🟪 ${esc(MG.teams[1].name)} ✓</button>
+        <button class="jj-n" onclick="GAMES.midan.skipTurn()">محد أجاب 😅</button>
+      </div>`;
+  },
+  claimCell(team) {
+    const i = MG.midanCellIdx; if (i < 0) return;
+    MG.midanCells[i].owner = team;
+    MG.teams[team].score += MG.midanQ.p; sAward();
+    const el = $('mgs' + team);
+    if (el) { el.textContent = MG.teams[team].score; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    MG.midanTurn = 1 - MG.midanTurn;
+    if (MG.midanCells.every(c => c.owner !== null)) { mgEnd(); return; }
+    setTimeout(() => this.renderBoard(), 600);
+  },
+  skipTurn() { MG.midanTurn = 1 - MG.midanTurn; setTimeout(() => this.renderBoard(), 400); }
+};
+
+// ══════════════════════════════════════════════════════════════
+// لعبة بنك الأسئلة — اختر السؤال واربح أو تُسرق!
+// ══════════════════════════════════════════════════════════════
+GAMES.bankq = {
+  init() {
+    MG.title   = '💰 بنك الأسئلة';
+    MG.bankDone = {};
+    MG.bankQ    = null;
+    MG.bankMeta = null;
+    MG.next     = () => this.render();
+    this.render();
+  },
+  render() {
+    const cats   = Object.entries(BANK).slice(0, 8);
+    const levels = [200, 400, 600];
+    const rows = cats.map(([key, cat]) => {
+      const btns = levels.map(lvl => {
+        const has  = cat.qs.some(q => q.p === lvl);
+        const done = MG.bankDone[key + '_' + lvl];
+        return `<button class="bank-cell p${lvl} ${done ? 'done' : ''}"
+          onclick="GAMES.bankq.pickQ('${key}',${lvl})" ${(!has || done) ? 'disabled' : ''}>
+          ${done ? '✓' : lvl + ' 💰'}</button>`;
+      }).join('');
+      return `<div class="bank-row">
+        <div class="bcat"><span style="font-size:20px">${cat.ic}</span><span style="font-size:12px;font-weight:800">${esc(cat.name)}</span></div>
+        <div class="bank-pts">${btns}</div>
+      </div>`;
+    }).join('');
+    mgShell(MG.title,
+      `<div style="font-size:12.5px;color:var(--muted);font-weight:800;padding:4px 2px;margin-bottom:8px">اختر فئة ونقاط — إذا أخطأت، الفريق الثاني يسرق! 🔥</div>
+       <div class="bank-board">${rows}</div>
+       <div id="bankQArea"></div>`, '');
+    MG.refresh = () => this.render();
+  },
+  pickQ(key, lvl) {
+    const cat  = BANK[key]; if (!cat) return;
+    const pool = cat.qs.filter(q => q.p === lvl);
+    if (!pool.length) { toast('لا أسئلة في هذا المستوى', 'warn'); return; }
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    MG.bankQ    = q;
+    MG.bankMeta = { key, lvl, catName: cat.name, catIc: cat.ic };
+    sOpen();
+    $('bankQArea').innerHTML =
+      `<div style="margin:14px 0;padding:16px;background:rgba(13,6,46,.95);border-radius:16px;border:1px solid rgba(255,255,255,.13)">
+        <div style="font-size:12px;font-weight:800;color:var(--amber);margin-bottom:8px">${cat.ic} ${esc(cat.name)} — <b>${lvl} 💰</b></div>
+        <div style="font-size:clamp(16px,3.2vw,23px);font-weight:800;line-height:1.75">${esc(q.q)}</div>
+      </div>
+      ${mgRing(40, () => GAMES.bankq.revealQ())}
+      <div class="mg-ctrl"><button class="btn btn-cyan btn-sm" onclick="GAMES.bankq.revealQ()">الجواب 👀</button></div>
+      <div class="ansbox" id="bankAns"></div><div id="bankJudge"></div>`;
+  },
+  revealQ() {
+    clearInterval(mgTimerInt); sReveal();
+    const q = MG.bankQ; if (!q) return;
+    $('bankAns').textContent = '✅ ' + q.a;
+    $('bankAns').style.display = 'block';
+    const { key, lvl } = MG.bankMeta;
+    $('bankJudge').innerHTML =
+      `<div class="judge3" style="margin-top:14px">
+        <button class="jj-a" onclick="GAMES.bankq.award(0)">🟦 ${esc(MG.teams[0].name)} ✓</button>
+        <button class="jj-b" onclick="GAMES.bankq.award(1)">🟪 ${esc(MG.teams[1].name)} ✓</button>
+        <button class="jj-n" onclick="GAMES.bankq.award(null)">محد جاوب 😅</button>
+      </div>`;
+    MG.bankDone[key + '_' + lvl] = true;
+  },
+  award(team) {
+    const pts = MG.bankMeta ? MG.bankMeta.lvl / 100 : 1;
+    if (team !== null) {
+      MG.teams[team].score += pts; sAward();
+      const el = $('mgs' + team);
+      if (el) { el.textContent = MG.teams[team].score; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    } else sNone();
+    clearInterval(mgTimerInt);
+    if (MG.next) MG.next();
+  }
+};
+
 // إضافة زر AI في المنيجيم
 const _origMgShell = mgShell;
 mgShell = function(title, body, ctrl) {

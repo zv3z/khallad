@@ -10,6 +10,7 @@ const STATIC_ASSETS = [
   './app.js',
   './questions.js',
   './games.js',
+  './games2.js',
   './manifest.json',
 ];
 

@@ -670,6 +670,91 @@ body {
 footer{text-align:center;color:rgba(91,83,148,.7);font-size:12px;margin-top:40px;font-weight:700}
 footer b{color:var(--mag)}
 
+/* ══════════════════════════════════════════════
+   حروف وألوف — شبكة الحروف
+   ══════════════════════════════════════════════ */
+.harf-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:7px;
+  max-width:380px;
+  margin:12px auto;
+}
+.harf-cell{
+  font-family:'Lalezar';
+  font-size:clamp(20px,4.5vw,30px);
+  border-radius:50%;
+  padding:14px 0;
+  cursor:pointer;
+  color:#fff;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);
+  line-height:1;
+}
+.harf-cell:hover:not([disabled]){transform:scale(1.13);box-shadow:0 8px 28px rgba(0,0,0,.6)}
+.harf-cell[disabled]{opacity:.75;cursor:default}
+
+/* ══════════════════════════════════════════════
+   الميدان — شبكة الفئات
+   ══════════════════════════════════════════════ */
+.midan-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:12px auto;
+  max-width:500px;
+}
+.midan-cell{
+  cursor:pointer;
+  border-radius:16px;
+  padding:16px 10px;
+  text-align:center;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+}
+.midan-cell:hover:not(.claimed){transform:translateY(-5px);box-shadow:0 12px 30px rgba(0,0,0,.55)}
+.midan-cell.claimed{cursor:default}
+
+/* ══════════════════════════════════════════════
+   بنك الأسئلة — لوحة الأسئلة
+   ══════════════════════════════════════════════ */
+.bank-board{display:flex;flex-direction:column;gap:9px}
+.bank-row{
+  display:grid;
+  grid-template-columns:140px 1fr;
+  gap:10px;
+  background:rgba(21,11,51,.8);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;
+  padding:10px;
+  align-items:center;
+}
+.bcat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  text-align:center;
+  color:var(--ink);
+}
+.bank-pts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bank-cell{
+  font-family:'Lalezar';
+  font-size:15px;
+  border-radius:12px;
+  border:none;
+  padding:12px 4px;
+  cursor:pointer;
+  color:#fff;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;
+}
+.bank-cell:hover:not([disabled]):not(.done){transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.55)}
+.bank-cell.p200{background:linear-gradient(180deg,#34e3f7,#0891b2);color:#042c38}
+.bank-cell.p400{background:linear-gradient(180deg,#a78bfa,#7c3aed)}
+.bank-cell.p600{background:linear-gradient(180deg,#f06ad8,#c026d3)}
+.bank-cell.done,.bank-cell[disabled]:not(.done){background:rgba(29,21,69,.8)!important;color:rgba(74,63,138,.75)!important;cursor:default}
+@media(max-width:520px){.bank-row{grid-template-columns:1fr}.bcat{flex-direction:row;justify-content:center}}
+
 /* ── Reduced motion ── */
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
@@ -945,6 +1030,7 @@ footer b{color:var(--mag)}
 
 <script src="questions.js"></script>
 <script src="games.js"></script>
+<script src="games2.js"></script>
 <script src="app.js" defer></script>
 </body>
 </html>
